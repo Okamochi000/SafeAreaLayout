@@ -11,6 +11,14 @@ using UnityEditor;
 [ExecuteAlways]
 public class SafeAreaLayout : UIBehaviour
 {
+    private enum LayoutType
+    {
+        Top,
+        Bottom,
+        Left,
+        Right
+    }
+
     public bool IsUpdating { get; private set; } = false;
     public Action tempUpdatedCallback = null;
 
@@ -18,6 +26,10 @@ public class SafeAreaLayout : UIBehaviour
     [SerializeField] private VerticalOutsideLayout bottom = null;
     [SerializeField] private HorizontalOutsideLayout left = null;
     [SerializeField] private HorizontalOutsideLayout right = null;
+    [SerializeField] private bool isInvalidTop = false;
+    [SerializeField] private bool isInvalidBottom = false;
+    [SerializeField] private bool isInvalidLeft = false;
+    [SerializeField] private bool isInvalidRight = false;
 
     private RectTransform selfRectTransform_ = null;
     private Vector2 prevTopSize_ = Vector2.zero;
@@ -35,10 +47,15 @@ public class SafeAreaLayout : UIBehaviour
     protected void Update()
     {
         bool isUpdate = isChangedValidate_;
-        if ((top == null && prevTopSize_ != Vector2.zero) || (top != null && prevTopSize_ != top.GetRectTransform().sizeDelta)) { isUpdate = true; }
-        else if ((bottom == null && prevBottomSize_ != Vector2.zero) || (bottom != null && prevBottomSize_ != bottom.GetRectTransform().sizeDelta)) { isUpdate = true; }
-        else if ((left == null && prevLeftSize_ != Vector2.zero) || (left != null && prevLeftSize_ != left.GetRectTransform().sizeDelta)) { isUpdate = true; }
-        else if ((right == null && prevRightSize_ != Vector2.zero) || (right != null && prevRightSize_ != right.GetRectTransform().sizeDelta)) { isUpdate = true; }
+        foreach (LayoutType layoutType in Enum.GetValues(typeof(LayoutType)))
+        {
+            if (IsExistUpdate(layoutType))
+            {
+                isUpdate = true;
+                break;
+            }
+        }
+
         if (isUpdate) { UpdateLayout(); }
     }
 
@@ -88,59 +105,71 @@ public class SafeAreaLayout : UIBehaviour
         Vector2 offsetMax = Vector2.zero;
 
         // トップ設定
-        if (top == null)
+        if (!isInvalidTop)
         {
-            offsetMax.y = (area.yMax - resolition.height) * scale;
-            prevTopSize_ = Vector2.zero;
-        }
-        else
-        {
-            OutsideLayoutBase outsideLayout = top.GetComponent<OutsideLayoutBase>();
-            if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
-            offsetMax.y = -top.GetRectTransform().sizeDelta.y;
-            prevTopSize_ = top.GetRectTransform().sizeDelta;
+            if (top == null)
+            {
+                offsetMax.y = (area.yMax - resolition.height) * scale;
+                prevTopSize_ = Vector2.zero;
+            }
+            else
+            {
+                OutsideLayoutBase outsideLayout = top.GetComponent<OutsideLayoutBase>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                offsetMax.y = -top.GetRectTransform().sizeDelta.y;
+                prevTopSize_ = top.GetRectTransform().sizeDelta;
+            }
         }
 
         // ボトム設定
-        if (bottom == null)
+        if (!isInvalidBottom)
         {
-            offsetMin.y = area.yMin * scale;
-            prevBottomSize_ = Vector2.zero;
-        }
-        else
-        {
-            OutsideLayoutBase outsideLayout = bottom.GetComponent<OutsideLayoutBase>();
-            if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
-            offsetMin.y = bottom.GetRectTransform().sizeDelta.y;
-            prevBottomSize_ = bottom.GetRectTransform().sizeDelta;
+            if (bottom == null)
+            {
+                offsetMin.y = area.yMin * scale;
+                prevBottomSize_ = Vector2.zero;
+            }
+            else
+            {
+                OutsideLayoutBase outsideLayout = bottom.GetComponent<OutsideLayoutBase>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                offsetMin.y = bottom.GetRectTransform().sizeDelta.y;
+                prevBottomSize_ = bottom.GetRectTransform().sizeDelta;
+            }
         }
 
         // レフト設定
-        if (left == null)
+        if (!isInvalidLeft)
         {
-            offsetMin.x = area.xMin * scale;
-            prevLeftSize_ = Vector2.zero;
-        }
-        else
-        {
-            OutsideLayoutBase outsideLayout = left.GetComponent<OutsideLayoutBase>();
-            if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
-            offsetMin.x = left.GetRectTransform().sizeDelta.x;
-            prevLeftSize_ = left.GetRectTransform().sizeDelta;
+            if (left == null)
+            {
+                offsetMin.x = area.xMin * scale;
+                prevLeftSize_ = Vector2.zero;
+            }
+            else
+            {
+                OutsideLayoutBase outsideLayout = left.GetComponent<OutsideLayoutBase>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                offsetMin.x = left.GetRectTransform().sizeDelta.x;
+                prevLeftSize_ = left.GetRectTransform().sizeDelta;
+            }
         }
 
         // ライト設定
-        if (right == null)
+        if (!isInvalidRight)
         {
-            offsetMax.x = (area.xMax - resolition.width) * scale;
-            prevRightSize_ = Vector2.zero;
-        }
-        else
-        {
-            OutsideLayoutBase outsideLayout = right.GetComponent<OutsideLayoutBase>();
-            if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
-            offsetMax.x = -right.GetRectTransform().sizeDelta.x;
-            prevRightSize_ = right.GetRectTransform().sizeDelta;
+            if (right == null)
+            {
+                offsetMax.x = (area.xMax - resolition.width) * scale;
+                prevRightSize_ = Vector2.zero;
+            }
+            else
+            {
+                OutsideLayoutBase outsideLayout = right.GetComponent<OutsideLayoutBase>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                offsetMax.x = -right.GetRectTransform().sizeDelta.x;
+                prevRightSize_ = right.GetRectTransform().sizeDelta;
+            }
         }
 
         // 更新
@@ -168,5 +197,36 @@ public class SafeAreaLayout : UIBehaviour
         CanvasScaler canvas = transform.parent.GetComponent<CanvasScaler>();
         if (canvas == null) { return GetParentCanvasScaler(transform.parent); }
         else { return canvas; }
+    }
+
+    /// <summary>
+    /// 更新が存在するか
+    /// </summary>
+    /// <param name="layoutType"></param>
+    /// <returns></returns>
+    private bool IsExistUpdate(LayoutType layoutType)
+    {
+        switch (layoutType)
+        {
+            case LayoutType.Top:
+                if (isInvalidTop) { return true; }
+                if ((top == null && prevTopSize_ != Vector2.zero) || (top != null && prevTopSize_ != top.GetRectTransform().sizeDelta)) { return true; }
+                break;
+            case LayoutType.Bottom:
+                if (isInvalidBottom) { return true; }
+                if ((bottom == null && prevBottomSize_ != Vector2.zero) || (bottom != null && prevBottomSize_ != bottom.GetRectTransform().sizeDelta)) { return true; }
+                break;
+            case LayoutType.Left:
+                if (isInvalidLeft) { return true; }
+                if ((left == null && prevLeftSize_ != Vector2.zero) || (left != null && prevLeftSize_ != left.GetRectTransform().sizeDelta)) { return true; }
+                break;
+            case LayoutType.Right:
+                if (isInvalidRight) { return true; }
+                if ((right == null && prevRightSize_ != Vector2.zero) || (right != null && prevRightSize_ != right.GetRectTransform().sizeDelta)) { return true; }
+                break;
+            default: break;
+        }
+
+        return false;
     }
 }
