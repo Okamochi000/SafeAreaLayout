@@ -103,13 +103,14 @@ public class SafeAreaLayout : UIBehaviour
 
         Vector2 offsetMin = Vector2.zero;
         Vector2 offsetMax = Vector2.zero;
+        bool isSafeArea = !(area.xMin == 0.0f && area.xMax == area.width && area.yMin == 0.0f && area.yMax == area.height);
 
         // ÉgÉbÉvê›íË
         if (!isInvalidTop)
         {
             if (top == null)
             {
-                offsetMax.y = (area.yMax - resolition.height) * scale;
+                if (isSafeArea) { offsetMax.y = (area.yMax - resolition.height) * scale; }
                 prevTopSize_ = Vector2.zero;
             }
             else
@@ -126,7 +127,7 @@ public class SafeAreaLayout : UIBehaviour
         {
             if (bottom == null)
             {
-                offsetMin.y = area.yMin * scale;
+                if (isSafeArea) { offsetMin.y = area.yMin * scale; }
                 prevBottomSize_ = Vector2.zero;
             }
             else
@@ -143,7 +144,7 @@ public class SafeAreaLayout : UIBehaviour
         {
             if (left == null)
             {
-                offsetMin.x = area.xMin * scale;
+                if (isSafeArea) { offsetMin.x = area.xMin * scale; }
                 prevLeftSize_ = Vector2.zero;
             }
             else
@@ -160,7 +161,7 @@ public class SafeAreaLayout : UIBehaviour
         {
             if (right == null)
             {
-                offsetMax.x = (area.xMax - resolition.width) * scale;
+                if (isSafeArea) { offsetMax.x = (area.xMax - resolition.width) * scale; }
                 prevRightSize_ = Vector2.zero;
             }
             else

@@ -105,6 +105,9 @@ public abstract class OutsideLayoutBase : UIBehaviour
     {
         var resolition = Screen.currentResolution;
         var area = Screen.safeArea;
+        bool isSafeArea = !(area.xMin == 0.0f && area.xMax == area.width && area.yMin == 0.0f && area.yMax == area.height);
+        if (!isSafeArea) { return Vector2.zero; }
+
         float scale = 1.0f;
         CanvasScaler scaler = GetParentCanvasScaler(this.transform);
         if (scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize) { scale = scaler.referenceResolution.y / resolition.height; }
