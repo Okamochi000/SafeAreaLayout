@@ -88,7 +88,7 @@ public class SafeAreaLayout : UIBehaviour
 
         // 初期設定
         if (selfRectTransform_ == null) { selfRectTransform_ = this.GetComponent<RectTransform>(); }
-        var resolition = Screen.currentResolution;
+        var resolution = Screen.currentResolution;
         var area = Screen.safeArea;
         selfRectTransform_.pivot = new Vector2(0.5f, 0.5f);
         selfRectTransform_.anchorMin = Vector2.zero;
@@ -97,20 +97,16 @@ public class SafeAreaLayout : UIBehaviour
         selfRectTransform_.offsetMax = Vector2.zero;
 
         // スケーリング
-        float scale = 1.0f;
-        CanvasScaler scaler = GetParentCanvasScaler(this.transform);
-        if (scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize) { scale = scaler.referenceResolution.y / resolition.height; }
-
-        Vector2 offsetMin = Vector2.zero;
-        Vector2 offsetMax = Vector2.zero;
-        bool isSafeArea = !(area.xMin == 0.0f && area.xMax == area.width && area.yMin == 0.0f && area.yMax == area.height);
+        Vector2 safeAreaOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
+        Vector2 safeAreaOffsetMax = SafeAreaUtility.GetOutsideOffsetMax(this.transform);
+        Vector2 offsetMin = safeAreaOffsetMin;
+        Vector2 offsetMax = safeAreaOffsetMax;
 
         // トップ設定
         if (!isInvalidTop)
         {
             if (top == null)
             {
-                if (isSafeArea) { offsetMax.y = (area.yMax - resolition.height) * scale; }
                 prevTopSize_ = Vector2.zero;
             }
             else
@@ -127,7 +123,6 @@ public class SafeAreaLayout : UIBehaviour
         {
             if (bottom == null)
             {
-                if (isSafeArea) { offsetMin.y = area.yMin * scale; }
                 prevBottomSize_ = Vector2.zero;
             }
             else
@@ -144,7 +139,6 @@ public class SafeAreaLayout : UIBehaviour
         {
             if (left == null)
             {
-                if (isSafeArea) { offsetMin.x = area.xMin * scale; }
                 prevLeftSize_ = Vector2.zero;
             }
             else
@@ -161,7 +155,6 @@ public class SafeAreaLayout : UIBehaviour
         {
             if (right == null)
             {
-                if (isSafeArea) { offsetMax.x = (area.xMax - resolition.width) * scale; }
                 prevRightSize_ = Vector2.zero;
             }
             else
@@ -188,19 +181,6 @@ public class SafeAreaLayout : UIBehaviour
     }
 
     /// <summary>
-    /// 親キャンバスを取得する
-    /// </summary>
-    /// <returns></returns>
-    private CanvasScaler GetParentCanvasScaler(Transform transform)
-    {
-        if (transform.parent == null) { return null; }
-
-        CanvasScaler canvas = transform.parent.GetComponent<CanvasScaler>();
-        if (canvas == null) { return GetParentCanvasScaler(transform.parent); }
-        else { return canvas; }
-    }
-
-    /// <summary>
     /// 更新が存在するか
     /// </summary>
     /// <param name="layoutType"></param>
@@ -210,23 +190,33 @@ public class SafeAreaLayout : UIBehaviour
         switch (layoutType)
         {
             case LayoutType.Top:
-                if (isInvalidTop) { return true; }
-                if ((top == null && prevTopSize_ != Vector2.zero) || (top != null && prevTopSize_ != top.GetRectTransform().sizeDelta)) { return true; }
+                if (isInvalidTop || IsExistUpdateParts(top, prevTopSize_)) { return true; }
                 break;
             case LayoutType.Bottom:
-                if (isInvalidBottom) { return true; }
-                if ((bottom == null && prevBottomSize_ != Vector2.zero) || (bottom != null && prevBottomSize_ != bottom.GetRectTransform().sizeDelta)) { return true; }
+                if (isInvalidBottom || IsExistUpdateParts(bottom, prevBottomSize_)) { return true; }
                 break;
             case LayoutType.Left:
-                if (isInvalidLeft) { return true; }
-                if ((left == null && prevLeftSize_ != Vector2.zero) || (left != null && prevLeftSize_ != left.GetRectTransform().sizeDelta)) { return true; }
+                if (isInvalidLeft || IsExistUpdateParts(left, prevLeftSize_)) { return true; }
                 break;
             case LayoutType.Right:
-                if (isInvalidRight) { return true; }
-                if ((right == null && prevRightSize_ != Vector2.zero) || (right != null && prevRightSize_ != right.GetRectTransform().sizeDelta)) { return true; }
+                if (isInvalidRight || IsExistUpdateParts(right, prevRightSize_)) { return true; }
                 break;
             default: break;
         }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 各部位の更新が存在するか
+    /// </summary>
+    /// <param name="layoutBase"></param>
+    /// <param name="prevSize"></param>
+    /// <returns></returns>
+    private bool IsExistUpdateParts(OutsideLayoutBase layoutBase, Vector2 prevSize)
+    {
+        if (layoutBase == null && prevSize != Vector2.zero) { return true; }
+        if (layoutBase != null && prevSize != layoutBase.GetRectTransform().sizeDelta) { return true; }
 
         return false;
     }

@@ -44,8 +44,8 @@ public class VerticalOutsideLayout : OutsideLayoutBase
         }
 
         // 横幅をセーフエリア内にする
-        Vector2 outsideOffsetMin = GetOutsideOffsetMin();
-        Vector2 outsideOffsetMax = GetOutsideOffsetMax();
+        Vector2 outsideOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
+        Vector2 outsideOffsetMax = SafeAreaUtility.GetOutsideOffsetMax(this.transform);
         if (isHorizontalSafeArea)
         {
             offsetMin.x = outsideOffsetMin.x;

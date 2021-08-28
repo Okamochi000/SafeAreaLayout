@@ -45,12 +45,12 @@ public class IgnoneSafeAreaLayout : UIBehaviour
         // セーフエリア内に収める
         Vector2 offsetMin = selfRectTransform_.offsetMin;
         Vector2 offsetMax = selfRectTransform_.offsetMax;
-        Vector2 outsideOffsetMin = GetOutsideOffsetMin();
-        Vector2 outsideOffsetMax = GetOutsideOffsetMax();
+        Vector2 outsideOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
+        Vector2 outsideOffsetMax = SafeAreaUtility.GetOutsideOffsetMax(this.transform);
         if (isTopSafeArea) { offsetMax.y += outsideOffsetMax.y; }
         if (isBottomSafeArea) { offsetMin.y += outsideOffsetMin.y; }
-        if (isLeftSafeArea) { offsetMax.x += outsideOffsetMax.x; }
-        if (isRightSafeArea) { offsetMin.x += outsideOffsetMin.x; }
+        if (isRightSafeArea) { offsetMax.x += outsideOffsetMax.x; }
+        if (isLeftSafeArea) { offsetMin.x += outsideOffsetMin.x; }
         selfRectTransform_.offsetMin = offsetMin;
         selfRectTransform_.offsetMax = offsetMax;
 
@@ -73,7 +73,7 @@ public class IgnoneSafeAreaLayout : UIBehaviour
 
     protected override void OnEnable()
     {
-        CanvasScaler canvasScaler = GetParentCanvasScaler(this.transform);
+        CanvasScaler canvasScaler = SafeAreaUtility.GetParentCanvasScaler(this.transform);
         if (canvasScaler != null) { canvasRectTransform_ = canvasScaler.GetComponent<RectTransform>(); }
         if (selfRectTransform_ == null) { selfRectTransform_ = this.GetComponent<RectTransform>(); }
         UpdateRectTransform();
@@ -81,20 +81,20 @@ public class IgnoneSafeAreaLayout : UIBehaviour
 
     protected override void OnRectTransformDimensionsChange()
     {
-        if (!isLock_ && !isSafeAreaLayout_)
+        if (isLock_) { return; }
+        if (isSafeAreaLayout_) { return; }
+
+        SafeAreaLayout safeAreaLayout = GetSafeAreaLayout(this.transform);
+        if (safeAreaLayout != null && safeAreaLayout.IsUpdating)
         {
-            SafeAreaLayout safeAreaLayout = GetSafeAreaLayout(this.transform);
-            if (safeAreaLayout != null && safeAreaLayout.IsUpdating)
-            {
-                isSafeAreaLayout_ = true;
-                safeAreaLayout.tempUpdatedCallback += UpdateRectTransform;
-            }
-            else
-            {
-                CanvasScaler canvasScaler = GetParentCanvasScaler(this.transform);
-                if (canvasScaler != null) { canvasRectTransform_ = canvasScaler.GetComponent<RectTransform>(); }
-                UpdateRectTransform();
-            }
+            isSafeAreaLayout_ = true;
+            safeAreaLayout.tempUpdatedCallback += UpdateRectTransform;
+        }
+        else
+        {
+            CanvasScaler canvasScaler = SafeAreaUtility.GetParentCanvasScaler(this.transform);
+            if (canvasScaler != null) { canvasRectTransform_ = canvasScaler.GetComponent<RectTransform>(); }
+            UpdateRectTransform();
         }
     }
 
@@ -109,62 +109,9 @@ public class IgnoneSafeAreaLayout : UIBehaviour
 #endif
 
     /// <summary>
-    /// セーフエリア外取得(ボトム、レフト)
+    /// 親SafeAreaLayoutを取得する
     /// </summary>
-    /// <returns></returns>
-    private Vector2 GetOutsideOffsetMin()
-    {
-        var resolition = Screen.currentResolution;
-        var area = Screen.safeArea;
-        float scale = 1.0f;
-        CanvasScaler scaler = GetParentCanvasScaler(this.transform);
-        if (scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize) { scale = scaler.referenceResolution.y / resolition.height; }
-
-        Vector2 offsetMin = Vector2.zero;
-        offsetMin.y = area.yMin * scale;
-        offsetMin.x = area.xMin * scale;
-
-        return offsetMin;
-    }
-
-    /// <summary>
-    /// 左右セーフエリア外取得(トップ、ライト)
-    /// </summary>
-    /// <returns></returns>
-    private Vector2 GetOutsideOffsetMax()
-    {
-        var resolition = Screen.currentResolution;
-        var area = Screen.safeArea;
-        bool isSafeArea = !(area.xMin == 0.0f && area.xMax == area.width && area.yMin == 0.0f && area.yMax == area.height);
-        if (!isSafeArea) { return Vector2.zero; }
-
-        float scale = 1.0f;
-        CanvasScaler scaler = GetParentCanvasScaler(this.transform);
-        if (scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize) { scale = scaler.referenceResolution.y / resolition.height; }
-
-        Vector2 offsetMax = Vector2.zero;
-        offsetMax.y = (area.yMax - resolition.height) * scale;
-        offsetMax.x = (area.xMax - resolition.width) * scale;
-
-        return offsetMax;
-    }
-
-    /// <summary>
-    /// 親キャンバスを取得する
-    /// </summary>
-    /// <returns></returns>
-    private CanvasScaler GetParentCanvasScaler(Transform transform)
-    {
-        if (transform.parent == null) { return null; }
-
-        CanvasScaler canvas = transform.parent.GetComponent<CanvasScaler>();
-        if (canvas == null) { return GetParentCanvasScaler(transform.parent); }
-        else { return canvas; }
-    }
-
-    /// <summary>
-    /// 親BodyLayoutを取得する
-    /// </summary>
+    /// <param name="transform"></param>
     /// <returns></returns>
     private SafeAreaLayout GetSafeAreaLayout(Transform transform)
     {
