@@ -1,15 +1,10 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using UnityEditor;
 
 /// <summary>
 /// セーフエリアレイアウト
 /// </summary>
-[DisallowMultipleComponent]
-[ExecuteAlways]
-public class SafeAreaLayout : UIBehaviour
+public class SafeAreaLayout : SafeAreaBehaviour
 {
     private enum LayoutType
     {
@@ -19,7 +14,6 @@ public class SafeAreaLayout : UIBehaviour
         Right
     }
 
-    public bool IsUpdating { get; private set; } = false;
     public Action tempUpdatedCallback = null;
 
     [SerializeField] private VerticalOutsideLayout top = null;
@@ -31,70 +25,34 @@ public class SafeAreaLayout : UIBehaviour
     [SerializeField] private bool isInvalidLeft = false;
     [SerializeField] private bool isInvalidRight = false;
 
-    private RectTransform selfRectTransform_ = null;
     private Vector2 prevTopSize_ = Vector2.zero;
     private Vector2 prevBottomSize_ = Vector2.zero;
     private Vector2 prevLeftSize_ = Vector2.zero;
     private Vector2 prevRightSize_ = Vector2.zero;
-    private bool isChangedValidate_ = false;
 
     protected override void Start()
     {
-        UpdateLayout();
-    }
-
-    // Update is called once per frame
-    protected void Update()
-    {
-        bool isUpdate = isChangedValidate_;
-        foreach (LayoutType layoutType in Enum.GetValues(typeof(LayoutType)))
-        {
-            if (IsExistUpdate(layoutType))
-            {
-                isUpdate = true;
-                break;
-            }
-        }
-
-        if (isUpdate) { UpdateLayout(); }
+        UpdateLayoutLock();
     }
 
     protected override void OnRectTransformDimensionsChange()
     {
         base.OnRectTransformDimensionsChange();
-        UpdateLayout();
+        UpdateLayoutLock();
     }
-
-#if UNITY_EDITOR
-    /// <summary>
-    /// インスペクター変更検知
-    /// </summary>
-    protected override void OnValidate()
-    {
-        base.OnValidate();
-        isChangedValidate_ = true;
-    }
-#endif
 
     /// <summary>
     /// ノッジを更新する
     /// </summary>
-    private void UpdateLayout()
+    protected override void UpdateLayout()
     {
-        if (IsUpdating) { return; }
-
-        IsUpdating = true;
-        isChangedValidate_ = false;
-
         // 初期設定
-        if (selfRectTransform_ == null) { selfRectTransform_ = this.GetComponent<RectTransform>(); }
-        var resolution = Screen.currentResolution;
-        var area = Screen.safeArea;
-        selfRectTransform_.pivot = new Vector2(0.5f, 0.5f);
-        selfRectTransform_.anchorMin = Vector2.zero;
-        selfRectTransform_.anchorMax = Vector2.one;
-        selfRectTransform_.offsetMin = Vector2.zero;
-        selfRectTransform_.offsetMax = Vector2.zero;
+        RectTransform selfRectTransform = GetRectTransform();
+        selfRectTransform.pivot = new Vector2(0.5f, 0.5f);
+        selfRectTransform.anchorMin = Vector2.zero;
+        selfRectTransform.anchorMax = Vector2.one;
+        selfRectTransform.offsetMin = Vector2.zero;
+        selfRectTransform.offsetMax = Vector2.zero;
 
         // スケーリング
         Vector2 safeAreaOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
@@ -111,8 +69,8 @@ public class SafeAreaLayout : UIBehaviour
             }
             else
             {
-                OutsideLayoutBase outsideLayout = top.GetComponent<OutsideLayoutBase>();
-                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                SafeAreaBehaviour outsideLayout = top.GetComponent<SafeAreaBehaviour>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayoutLock(); }
                 offsetMax.y = -top.GetRectTransform().sizeDelta.y;
                 prevTopSize_ = top.GetRectTransform().sizeDelta;
             }
@@ -127,8 +85,8 @@ public class SafeAreaLayout : UIBehaviour
             }
             else
             {
-                OutsideLayoutBase outsideLayout = bottom.GetComponent<OutsideLayoutBase>();
-                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                SafeAreaBehaviour outsideLayout = bottom.GetComponent<SafeAreaBehaviour>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayoutLock(); }
                 offsetMin.y = bottom.GetRectTransform().sizeDelta.y;
                 prevBottomSize_ = bottom.GetRectTransform().sizeDelta;
             }
@@ -143,8 +101,8 @@ public class SafeAreaLayout : UIBehaviour
             }
             else
             {
-                OutsideLayoutBase outsideLayout = left.GetComponent<OutsideLayoutBase>();
-                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                SafeAreaBehaviour outsideLayout = left.GetComponent<SafeAreaBehaviour>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayoutLock(); }
                 offsetMin.x = left.GetRectTransform().sizeDelta.x;
                 prevLeftSize_ = left.GetRectTransform().sizeDelta;
             }
@@ -159,16 +117,16 @@ public class SafeAreaLayout : UIBehaviour
             }
             else
             {
-                OutsideLayoutBase outsideLayout = right.GetComponent<OutsideLayoutBase>();
-                if (outsideLayout != null) { outsideLayout.UpdateLayout(); }
+                SafeAreaBehaviour outsideLayout = right.GetComponent<SafeAreaBehaviour>();
+                if (outsideLayout != null) { outsideLayout.UpdateLayoutLock(); }
                 offsetMax.x = -right.GetRectTransform().sizeDelta.x;
                 prevRightSize_ = right.GetRectTransform().sizeDelta;
             }
         }
 
         // 更新
-        selfRectTransform_.offsetMin = offsetMin;
-        selfRectTransform_.offsetMax = offsetMax;
+        selfRectTransform.offsetMin = offsetMin;
+        selfRectTransform.offsetMax = offsetMax;
 
         // 更新コールバック呼び出し
         if (tempUpdatedCallback != null)
@@ -176,8 +134,22 @@ public class SafeAreaLayout : UIBehaviour
             tempUpdatedCallback();
             tempUpdatedCallback = null;
         }
+    }
 
-        IsUpdating = false;
+    /// <summary>
+    /// 更新が存在するか
+    /// </summary>
+    /// <returns></returns>
+    protected override bool IsExistUpdate()
+    {
+        if (base.IsExistUpdate()) { return true; }
+
+        foreach (LayoutType layoutType in Enum.GetValues(typeof(LayoutType)))
+        {
+            if (IsExistUpdate(layoutType)) { return true; }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -213,7 +185,7 @@ public class SafeAreaLayout : UIBehaviour
     /// <param name="layoutBase"></param>
     /// <param name="prevSize"></param>
     /// <returns></returns>
-    private bool IsExistUpdateParts(OutsideLayoutBase layoutBase, Vector2 prevSize)
+    private bool IsExistUpdateParts(SafeAreaBehaviour layoutBase, Vector2 prevSize)
     {
         if (layoutBase == null && prevSize != Vector2.zero) { return true; }
         if (layoutBase != null && prevSize != layoutBase.GetRectTransform().sizeDelta) { return true; }

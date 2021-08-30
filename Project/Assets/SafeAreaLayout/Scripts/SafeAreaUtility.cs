@@ -22,6 +22,20 @@ public static class SafeAreaUtility
     }
 
     /// <summary>
+    /// 現在のセーフエリアと一致するか
+    /// </summary>
+    /// <param name="safeArea"></param>
+    /// <returns></returns>
+    public static bool IsMatchSafeArea(Rect safeArea)
+    {
+        Rect currentSafeArea = Screen.safeArea;
+        if (currentSafeArea.xMin != safeArea.xMin || currentSafeArea.yMin != safeArea.yMin) { return false; }
+        if (currentSafeArea.width != safeArea.width || currentSafeArea.height != safeArea.height) { return false; }
+
+        return true;
+    }
+
+    /// <summary>
     /// キャンバスのスケール値を取得する
     /// </summary>
     /// <param name="transform"></param>

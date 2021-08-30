@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// </summary>
 [RequireComponent(typeof(VerticalLayoutGroup))]
 [RequireComponent(typeof(ContentSizeFitter))]
-public class VerticalOutsideLayout : OutsideLayoutBase
+public class VerticalOutsideLayout : SafeAreaBehaviour
 {
     /// <summary>
     /// レイアウトタイプ
@@ -18,13 +18,14 @@ public class VerticalOutsideLayout : OutsideLayoutBase
         Bottom
     }
 
+    [SerializeField] private RectTransform outside = null;
     [SerializeField] private bool isHorizontalSafeArea = false;
     [SerializeField] private LayoutType layoutType = LayoutType.Top;
 
     /// <summary>
     /// レイアウト更新
     /// </summary>
-    protected override void OnUpdateLayout()
+    protected override void UpdateLayout()
     {
         // 初期設定
         RectTransform selfRectTransform = GetRectTransform();

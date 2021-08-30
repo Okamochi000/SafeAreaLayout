@@ -1,13 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 /// <summary>
 /// セーフエリア無視レイアウト
 /// </summary>
-[DisallowMultipleComponent]
-[ExecuteAlways]
-public class IgnoneSafeAreaLayout : UIBehaviour
+public class IgnoneSafeAreaLayout : SafeAreaBehaviour
 {
     [SerializeField] private bool isTopSafeArea = false;
     [SerializeField] private bool isBottomSafeArea = false;
@@ -15,98 +12,65 @@ public class IgnoneSafeAreaLayout : UIBehaviour
     [SerializeField] private bool isRightSafeArea = false;
 
     private RectTransform canvasRectTransform_ = null;
-    private RectTransform selfRectTransform_ = null;
-    private bool isLock_ = false;
     private bool isSafeAreaLayout_ = false;
-    private bool isChangedValidate_ = false;
-
-    /// <summary>
-    /// ノッジを更新する
-    /// </summary>
-    public void UpdateRectTransform()
-    {
-        if (isLock_) { return; }
-        if (canvasRectTransform_ == null) { return; }
-        if (selfRectTransform_ == null) { return; }
-
-        isLock_ = true;
-        isSafeAreaLayout_ = false;
-        isChangedValidate_ = false;
-
-        // セーフエリアを無視したサイズに調整する
-        Vector2 sizeDelta = canvasRectTransform_.sizeDelta;
-        selfRectTransform_.pivot = new Vector2(0.5f, 0.5f);
-        selfRectTransform_.anchorMin = Vector2.zero;
-        selfRectTransform_.anchorMax = Vector2.one;
-        selfRectTransform_.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, canvasRectTransform_.sizeDelta.x);
-        selfRectTransform_.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, canvasRectTransform_.sizeDelta.y);
-        selfRectTransform_.position = canvasRectTransform_.position;
-
-        // セーフエリア内に収める
-        Vector2 offsetMin = selfRectTransform_.offsetMin;
-        Vector2 offsetMax = selfRectTransform_.offsetMax;
-        Vector2 outsideOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
-        Vector2 outsideOffsetMax = SafeAreaUtility.GetOutsideOffsetMax(this.transform);
-        if (isTopSafeArea) { offsetMax.y += outsideOffsetMax.y; }
-        if (isBottomSafeArea) { offsetMin.y += outsideOffsetMin.y; }
-        if (isRightSafeArea) { offsetMax.x += outsideOffsetMax.x; }
-        if (isLeftSafeArea) { offsetMin.x += outsideOffsetMin.x; }
-        selfRectTransform_.offsetMin = offsetMin;
-        selfRectTransform_.offsetMax = offsetMax;
-
-        isLock_ = false;
-    }
-
-    protected override void Awake()
-    {
-        UpdateRectTransform();
-    }
-
-    // Update is called once per frame
-    protected void Update()
-    {
-        if (isChangedValidate_)
-        {
-            UpdateRectTransform();
-        }
-    }
 
     protected override void OnEnable()
     {
         CanvasScaler canvasScaler = SafeAreaUtility.GetParentCanvasScaler(this.transform);
         if (canvasScaler != null) { canvasRectTransform_ = canvasScaler.GetComponent<RectTransform>(); }
-        if (selfRectTransform_ == null) { selfRectTransform_ = this.GetComponent<RectTransform>(); }
-        UpdateRectTransform();
+        UpdateLayoutLock();
     }
 
     protected override void OnRectTransformDimensionsChange()
     {
-        if (isLock_) { return; }
+        if (IsUpdating) { return; }
         if (isSafeAreaLayout_) { return; }
 
         SafeAreaLayout safeAreaLayout = GetSafeAreaLayout(this.transform);
         if (safeAreaLayout != null && safeAreaLayout.IsUpdating)
         {
             isSafeAreaLayout_ = true;
-            safeAreaLayout.tempUpdatedCallback += UpdateRectTransform;
+            safeAreaLayout.tempUpdatedCallback += UpdateLayoutLock;
         }
         else
         {
             CanvasScaler canvasScaler = SafeAreaUtility.GetParentCanvasScaler(this.transform);
             if (canvasScaler != null) { canvasRectTransform_ = canvasScaler.GetComponent<RectTransform>(); }
-            UpdateRectTransform();
+            UpdateLayoutLock();
         }
     }
 
-#if UNITY_EDITOR
     /// <summary>
-    /// インスペクター変更検知
+    /// ノッジを更新する
     /// </summary>
-    protected override void OnValidate()
+    protected override void UpdateLayout()
     {
-        isChangedValidate_ = true;
+        if (canvasRectTransform_ == null) { return; }
+
+        isSafeAreaLayout_ = false;
+
+        // セーフエリアを無視したサイズに調整する
+        Vector2 sizeDelta = canvasRectTransform_.sizeDelta;
+        RectTransform selfRectTransform = GetRectTransform();
+        selfRectTransform.pivot = new Vector2(0.5f, 0.5f);
+        selfRectTransform.anchorMin = Vector2.zero;
+        selfRectTransform.anchorMax = Vector2.one;
+        selfRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, canvasRectTransform_.sizeDelta.x);
+        selfRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, canvasRectTransform_.sizeDelta.y);
+        selfRectTransform.position = canvasRectTransform_.position;
+
+        // セーフエリア内に収める
+        Vector2 offsetMin = selfRectTransform.offsetMin;
+        Vector2 offsetMax = selfRectTransform.offsetMax;
+        Vector2 outsideOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
+        Vector2 outsideOffsetMax = SafeAreaUtility.GetOutsideOffsetMax(this.transform);
+        if (isTopSafeArea) { offsetMax.y += outsideOffsetMax.y; }
+        if (isBottomSafeArea) { offsetMin.y += outsideOffsetMin.y; }
+        if (isRightSafeArea) { offsetMax.x += outsideOffsetMax.x; }
+        if (isLeftSafeArea) { offsetMin.x += outsideOffsetMin.x; }
+        selfRectTransform.offsetMin = offsetMin;
+        selfRectTransform.offsetMax = offsetMax;
     }
-#endif
 
     /// <summary>
     /// 親SafeAreaLayoutを取得する
