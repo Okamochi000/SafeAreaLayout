@@ -61,8 +61,8 @@ public class HorizontalOutsideLayout : SafeAreaBehaviour
         if (outside != null)
         {
             Vector2 sizeDelta = selfRectTransform.sizeDelta;
-            if (layoutType == LayoutType.Left) { sizeDelta.x = -outsideOffsetMax.x; }
-            else { sizeDelta.x = outsideOffsetMin.x; }
+            if (layoutType == LayoutType.Left) { sizeDelta.x = outsideOffsetMin.x ; }
+            else { sizeDelta.x = -outsideOffsetMax.x; }
             outside.sizeDelta = sizeDelta;
         }
 
