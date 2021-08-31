@@ -57,14 +57,15 @@ public class SafeAreaLayout : SafeAreaBehaviour
         // スケーリング
         Vector2 safeAreaOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
         Vector2 safeAreaOffsetMax = SafeAreaUtility.GetOutsideOffsetMax(this.transform);
-        Vector2 offsetMin = safeAreaOffsetMin;
-        Vector2 offsetMax = safeAreaOffsetMax;
+        Vector2 offsetMin = Vector2.zero;
+        Vector2 offsetMax = Vector2.zero;
 
         // トップ設定
         if (!isInvalidTop)
         {
             if (top == null)
             {
+                offsetMax.y = safeAreaOffsetMax.y;
                 prevTopSize_ = Vector2.zero;
             }
             else
@@ -81,6 +82,7 @@ public class SafeAreaLayout : SafeAreaBehaviour
         {
             if (bottom == null)
             {
+                offsetMin.y = safeAreaOffsetMin.y;
                 prevBottomSize_ = Vector2.zero;
             }
             else
@@ -97,6 +99,7 @@ public class SafeAreaLayout : SafeAreaBehaviour
         {
             if (left == null)
             {
+                offsetMin.x = safeAreaOffsetMin.x;
                 prevLeftSize_ = Vector2.zero;
             }
             else
@@ -113,6 +116,7 @@ public class SafeAreaLayout : SafeAreaBehaviour
         {
             if (right == null)
             {
+                offsetMax.x = safeAreaOffsetMax.x;
                 prevRightSize_ = Vector2.zero;
             }
             else

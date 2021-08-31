@@ -93,7 +93,7 @@ public static class SafeAreaUtility
         float scale = GetCanvasScale(transform);
         Vector2 offsetMin = Vector2.zero;
         offsetMin.y = area.yMin * scale;
-        offsetMin.x = (area.xMax - resolution.width) * scale * -1.0f;
+        offsetMin.x = area.xMin * scale;
 
         return offsetMin;
     }
@@ -112,7 +112,7 @@ public static class SafeAreaUtility
         float scale = SafeAreaUtility.GetCanvasScale(transform);
         Vector2 offsetMax = Vector2.zero;
         offsetMax.y = (area.yMax - resolution.height) * scale;
-        offsetMax.x = area.xMin * scale * -1.0f;
+        offsetMax.x = (area.xMax - resolution.width) * scale;
 
         return offsetMax;
     }

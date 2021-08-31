@@ -98,7 +98,7 @@ public class SafeAreaBehaviour : UIBehaviour
     protected virtual bool IsExistUpdate()
     {
         bool isUpdate = isChangedValidate_;
-        isUpdate = !SafeAreaUtility.IsMatchSafeArea(prevSafeArea_);
+        if (!isUpdate) { isUpdate = !SafeAreaUtility.IsMatchSafeArea(prevSafeArea_); }
 
         return isUpdate;
     }

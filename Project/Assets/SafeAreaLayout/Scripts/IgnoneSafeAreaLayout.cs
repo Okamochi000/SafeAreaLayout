@@ -49,27 +49,30 @@ public class IgnoneSafeAreaLayout : SafeAreaBehaviour
 
         isSafeAreaLayout_ = false;
 
-        // セーフエリアを無視したサイズに調整する
-        Vector2 sizeDelta = canvasRectTransform_.sizeDelta;
+        // アンカー設定
         RectTransform selfRectTransform = GetRectTransform();
         selfRectTransform.pivot = new Vector2(0.5f, 0.5f);
         selfRectTransform.anchorMin = Vector2.zero;
         selfRectTransform.anchorMax = Vector2.one;
-        selfRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, canvasRectTransform_.sizeDelta.x);
-        selfRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, canvasRectTransform_.sizeDelta.y);
-        selfRectTransform.position = canvasRectTransform_.position;
 
-        // セーフエリア内に収める
-        Vector2 offsetMin = selfRectTransform.offsetMin;
-        Vector2 offsetMax = selfRectTransform.offsetMax;
+        // サイズ設定
+        Vector2 sizeDelta = canvasRectTransform_.sizeDelta;
         Vector2 outsideOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
         Vector2 outsideOffsetMax = SafeAreaUtility.GetOutsideOffsetMax(this.transform);
-        if (isTopSafeArea) { offsetMax.y += outsideOffsetMax.y; }
-        if (isBottomSafeArea) { offsetMin.y += outsideOffsetMin.y; }
-        if (isRightSafeArea) { offsetMax.x += outsideOffsetMax.x; }
-        if (isLeftSafeArea) { offsetMin.x += outsideOffsetMin.x; }
-        selfRectTransform.offsetMin = offsetMin;
-        selfRectTransform.offsetMax = offsetMax;
+        if (isTopSafeArea) { sizeDelta.y += outsideOffsetMax.y; }
+        if (isBottomSafeArea) { sizeDelta.y -= outsideOffsetMin.y; }
+        if (isRightSafeArea) { sizeDelta.x += outsideOffsetMax.x; }
+        if (isLeftSafeArea) { sizeDelta.x -= outsideOffsetMin.x; }
+        selfRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, sizeDelta.x);
+        selfRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, sizeDelta.y);
+
+        // 座標設定
+        Vector3 centerPosition = canvasRectTransform_.position;
+        if (isTopSafeArea) { centerPosition.y += (outsideOffsetMax.y / 2.0f); }
+        if (isBottomSafeArea) { centerPosition.y += (outsideOffsetMin.y / 2.0f); }
+        if (isRightSafeArea) { centerPosition.x += (outsideOffsetMax.x / 2.0f); }
+        if (isLeftSafeArea) { centerPosition.x += (outsideOffsetMin.x / 2.0f); }
+        selfRectTransform.position = centerPosition;
     }
 
     /// <summary>
