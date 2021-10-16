@@ -1,7 +1,7 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
-/// ƒZ[ƒtƒGƒŠƒA•ªŠg’£‚·‚é
+/// ã‚»ãƒ¼ãƒ•ã‚¨ãƒªã‚¢åˆ†æ‹¡å¼µã™ã‚‹
 /// </summary>
 public class SafeAreaExpansion : SafeAreaBehaviour
 {
@@ -11,19 +11,19 @@ public class SafeAreaExpansion : SafeAreaBehaviour
     [SerializeField] private bool isRight = false;
 
     /// <summary>
-    /// ƒmƒbƒW‚ğXV‚·‚é
+    /// ãƒãƒƒã‚¸ã‚’æ›´æ–°ã™ã‚‹
     /// </summary>
     protected override void UpdateLayout()
     {
         if (!isTop && !isBottom && !isLeft && !isRight) { return; }
 
-        // ƒAƒ“ƒJ[İ’è
+        // ã‚¢ãƒ³ã‚«ãƒ¼è¨­å®š
         RectTransform selfRectTransform = GetRectTransform();
         selfRectTransform.pivot = new Vector2(0.5f, 0.5f);
         selfRectTransform.anchorMin = Vector2.zero;
         selfRectTransform.anchorMax = Vector2.one;
 
-        // ƒIƒtƒZƒbƒgİ’è
+        // ã‚ªãƒ•ã‚»ãƒƒãƒˆè¨­å®š
         Vector2 offsetMin = selfRectTransform.offsetMin;
         Vector2 offsetMax = selfRectTransform.offsetMax;
         Vector2 outsideOffsetMin = SafeAreaUtility.GetOutsideOffsetMin(this.transform);
