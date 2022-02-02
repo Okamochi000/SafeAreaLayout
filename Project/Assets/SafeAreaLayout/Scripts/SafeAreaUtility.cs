@@ -45,8 +45,12 @@ public static class SafeAreaUtility
         CanvasScaler canvasScaler = GetParentCanvasScaler(transform);
         if (canvasScaler != null && canvasScaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize)
         {
+            RectTransform rectTransform = canvasScaler.GetComponent<RectTransform>();
             Resolution resolution = Screen.currentResolution;
-            float scale = canvasScaler.referenceResolution.y / resolution.height;
+            float scale = 1.0f;
+            if (canvasScaler.referenceResolution.x == rectTransform.sizeDelta.x) { scale = canvasScaler.referenceResolution.x / resolution.width; }
+            else if (canvasScaler.referenceResolution.y == rectTransform.sizeDelta.y) { scale = canvasScaler.referenceResolution.y / resolution.height; }
+            else { scale = rectTransform.sizeDelta.x / resolution.width; }
             return scale;
         }
 
